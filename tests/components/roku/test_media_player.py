@@ -486,7 +486,7 @@ async def test_services(
     mock_roku.launch.assert_called_with("12")
 
 
-async def test_services_play_media_audio(
+async def test_services_play_media(
     hass: HomeAssistant,
     init_integration: MockConfigEntry,
     mock_roku: MagicMock,
@@ -497,26 +497,13 @@ async def test_services_play_media_audio(
         SERVICE_PLAY_MEDIA,
         {
             ATTR_ENTITY_ID: MAIN_ENTITY_ID,
-            ATTR_MEDIA_CONTENT_TYPE: MEDIA_TYPE_URL,
-            ATTR_MEDIA_CONTENT_ID: "https://awesome.tld/media.m4a",
-            ATTR_MEDIA_EXTRA: {
-                ATTR_NAME: "Sent from HA",
-                ATTR_FORMAT: "m4a",
-            },
+            ATTR_MEDIA_CONTENT_TYPE: "blah",
+            ATTR_MEDIA_CONTENT_ID: "https://localhost/media.m4a",
         },
         blocking=True,
     )
 
-    assert mock_roku.play_on_roku.call_count == 1
-    mock_roku.play_on_roku.assert_called_with(
-        "https://awesome.tld/media.m4a",
-        {
-            "t": "a",
-            "songName": "Sent from HA",
-            "songFormat": "m4a",
-            "artistName": "Home Assistant",
-        },
-    )
+    assert mock_roku.play_on_roku.call_count == 0
 
     await hass.services.async_call(
         MP_DOMAIN,
@@ -524,40 +511,49 @@ async def test_services_play_media_audio(
         {
             ATTR_ENTITY_ID: MAIN_ENTITY_ID,
             ATTR_MEDIA_CONTENT_TYPE: MEDIA_TYPE_MUSIC,
-            ATTR_MEDIA_CONTENT_ID: "https://awesome.tld/media.m4a",
+            ATTR_MEDIA_CONTENT_ID: "https://localhost/media.m4a",
+            ATTR_MEDIA_EXTRA: {ATTR_FORMAT: "blah"},
         },
         blocking=True,
     )
 
-    assert mock_roku.play_on_roku.call_count == 2
-    mock_roku.play_on_roku.assert_called_with(
-        "https://awesome.tld/media.m4a",
-        {
-            "t": "a",
-            "songName": "Home Assistant",
-            "songFormat": "m4a",
-            "artistName": "Home Assistant",
-        },
-    )
+    assert mock_roku.play_on_roku.call_count == 0
 
+
+@pytest.mark.parametrize(
+    "content_type, content_id, resolved_format",
+    [
+        (MEDIA_TYPE_URL, "http://localhost/media.m4a", "m4a"),
+        (MEDIA_TYPE_MUSIC, "http://localhost/media.m4a", "m4a"),
+        (MEDIA_TYPE_MUSIC, "http://localhost/media.mka", "mka"),
+        (MEDIA_TYPE_MUSIC, "http://localhost/media.wma", "wma"),
+    ],
+)
+async def test_services_play_media_audio(
+    hass: HomeAssistant,
+    init_integration: MockConfigEntry,
+    mock_roku: MagicMock,
+    content_type: str,
+    content_id: str,
+    resolved_format: str,
+) -> None:
+    """Test the media player services related to playing media."""
     await hass.services.async_call(
         MP_DOMAIN,
         SERVICE_PLAY_MEDIA,
         {
             ATTR_ENTITY_ID: MAIN_ENTITY_ID,
-            ATTR_MEDIA_CONTENT_TYPE: MEDIA_TYPE_MUSIC,
-            ATTR_MEDIA_CONTENT_ID: "https://awesome.tld/media.mka",
+            ATTR_MEDIA_CONTENT_TYPE: content_type,
+            ATTR_MEDIA_CONTENT_ID: content_id,
         },
         blocking=True,
     )
-
-    assert mock_roku.play_on_roku.call_count == 3
-    mock_roku.play_on_roku.assert_called_with(
-        "https://awesome.tld/media.mka",
+    mock_roku.play_on_roku.assert_called_once_with(
+        content_id,
         {
             "t": "a",
             "songName": "Home Assistant",
-            "songFormat": "mka",
+            "songFormat": resolved_format,
             "artistName": "Home Assistant",
         },
     )
