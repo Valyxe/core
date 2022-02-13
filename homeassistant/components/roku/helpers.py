@@ -33,13 +33,10 @@ def guess_stream_format(url: str, mime_type: str | None = None) -> str | None:
     if mime_type == "audio/mpeg" and parsed.path.endswith(".m4a"):
         return "m4a"
 
-    if mime_type == "video/x-matroska":
-        if parsed.path.endswith(".mka"):
-            return "mka"
-
-        if parsed.path.endswith(".mks"):
-            return "mks"
-
+    if parsed.path.endswith(".mks"):
+        return "mks"
+    if parsed.path.endswith(".mka"):
+        return "mka"
     if parsed.path.endswith(".ism"):
         return "ism"
 
