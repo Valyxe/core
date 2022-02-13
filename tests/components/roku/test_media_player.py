@@ -559,10 +559,26 @@ async def test_services_play_media_audio(
     )
 
 
+@pytest.mark.parametrize(
+    "content_type, content_id, resolved_format",
+    [
+        (MEDIA_TYPE_URL, "http://localhost/media.mp4", "mp4"),
+        (MEDIA_TYPE_VIDEO, "http://localhost/media.m4v", "mp4"),
+        (MEDIA_TYPE_VIDEO, "http://localhost/media.mov", "mp4"),
+        (MEDIA_TYPE_VIDEO, "http://localhost/media.mkv", "mkv"),
+        (MEDIA_TYPE_VIDEO, "http://localhost/media.mks", "mks"),
+        (MEDIA_TYPE_VIDEO, "http://localhost/media.m3u8", "hls"),
+        (MEDIA_TYPE_VIDEO, "http://localhost/media.dash", "mp4"),
+        (MEDIA_TYPE_VIDEO, "http://localhost/media.ism", "ism"),
+    ],
+)
 async def test_services_play_media_video(
     hass: HomeAssistant,
     init_integration: MockConfigEntry,
     mock_roku: MagicMock,
+    content_type: str,
+    content_id: str,
+    resolved_format: str,
 ) -> None:
     """Test the media player services related to playing media."""
     await hass.services.async_call(
@@ -570,61 +586,18 @@ async def test_services_play_media_video(
         SERVICE_PLAY_MEDIA,
         {
             ATTR_ENTITY_ID: MAIN_ENTITY_ID,
-            ATTR_MEDIA_CONTENT_TYPE: MEDIA_TYPE_URL,
-            ATTR_MEDIA_CONTENT_ID: "https://awesome.tld/media.mp4",
-            ATTR_MEDIA_EXTRA: {
-                ATTR_NAME: "Sent from HA",
-            },
+            ATTR_MEDIA_CONTENT_TYPE: content_type,
+            ATTR_MEDIA_CONTENT_ID: content_id,
         },
         blocking=True,
     )
-
-    assert mock_roku.play_on_roku.call_count == 1
-    mock_roku.play_on_roku.assert_called_with(
-        "https://awesome.tld/media.mp4",
+    mock_roku.play_on_roku.assert_called_once_with(
+        content_id,
         {
-            "videoName": "Sent from HA",
-            "videoFormat": "mp4",
-        },
-    )
-
-    await hass.services.async_call(
-        MP_DOMAIN,
-        SERVICE_PLAY_MEDIA,
-        {
-            ATTR_ENTITY_ID: MAIN_ENTITY_ID,
-            ATTR_MEDIA_CONTENT_TYPE: MEDIA_TYPE_VIDEO,
-            ATTR_MEDIA_CONTENT_ID: "https://awesome.tld/media.mp4",
-        },
-        blocking=True,
-    )
-
-    assert mock_roku.play_on_roku.call_count == 2
-    mock_roku.play_on_roku.assert_called_with(
-        "https://awesome.tld/media.mp4",
-        {
-            "videoName": "Home Assistant",
-            "videoFormat": "mp4",
-        },
-    )
-
-    await hass.services.async_call(
-        MP_DOMAIN,
-        SERVICE_PLAY_MEDIA,
-        {
-            ATTR_ENTITY_ID: MAIN_ENTITY_ID,
-            ATTR_MEDIA_CONTENT_TYPE: MEDIA_TYPE_VIDEO,
-            ATTR_MEDIA_CONTENT_ID: "https://awesome.tld/media.mks",
-        },
-        blocking=True,
-    )
-
-    assert mock_roku.play_on_roku.call_count == 3
-    mock_roku.play_on_roku.assert_called_with(
-        "https://awesome.tld/media.mks",
-        {
-            "videoName": "Home Assistant",
-            "videoFormat": "mks",
+            "t": "a",
+            "songName": "Home Assistant",
+            "songFormat": resolved_format,
+            "artistName": "Home Assistant",
         },
     )
 
