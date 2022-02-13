@@ -499,6 +499,9 @@ async def test_services_play_media(
             ATTR_ENTITY_ID: MAIN_ENTITY_ID,
             ATTR_MEDIA_CONTENT_TYPE: "blah",
             ATTR_MEDIA_CONTENT_ID: "https://localhost/media.m4a",
+            ATTR_MEDIA_EXTRA: {
+                ATTR_NAME: "Test",
+            },
         },
         blocking=True,
     )
@@ -594,10 +597,8 @@ async def test_services_play_media_video(
     mock_roku.play_on_roku.assert_called_once_with(
         content_id,
         {
-            "t": "a",
-            "songName": "Home Assistant",
-            "songFormat": resolved_format,
-            "artistName": "Home Assistant",
+            "videoName": "Home Assistant",
+            "videoFormat": resolved_format,
         },
     )
 
