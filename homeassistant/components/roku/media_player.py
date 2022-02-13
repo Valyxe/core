@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
+import mimetypes
 from typing import Any
 
 import voluptuous as vol
@@ -387,6 +388,7 @@ class RokuMediaPlayer(RokuEntity, MediaPlayerEntity):
         """Play media from a URL or file, launch an application, or tune to a channel."""
         extra: dict[str, Any] = kwargs.get(ATTR_MEDIA_EXTRA) or {}
         original_media_type: str = media_type
+        mime_type: str | None = None
         stream_format: str | None = extra.get(ATTR_FORMAT)
 
         # Handle media_source
@@ -394,27 +396,33 @@ class RokuMediaPlayer(RokuEntity, MediaPlayerEntity):
             sourced_media = await media_source.async_resolve_media(self.hass, media_id)
             media_type = MEDIA_TYPE_URL
             media_id = sourced_media.url
-            stream_format = guess_stream_format(media_id, sourced_media.mime_type)
+            mime_type = sourced_media.mime_type
+            stream_format = guess_stream_format(media_id, mime_type)
 
         # If media ID is a relative URL, we serve it from HA.
         media_id = async_process_play_media_url(self.hass, media_id)
 
         if media_type == FORMAT_CONTENT_TYPE[HLS_PROVIDER]:
             media_type = MEDIA_TYPE_VIDEO
+            mime_type = FORMAT_CONTENT_TYPE[HLS_PROVIDER]
             stream_format = "hls"
 
         if media_type in (MEDIA_TYPE_MUSIC, MEDIA_TYPE_URL, MEDIA_TYPE_VIDEO):
+            if mime_type is None:
+                mime_type, _ = mimetypes.guess_type(media_id)
+
             if stream_format is None:
-                stream_format = guess_stream_format(media_id)
+                stream_format = guess_stream_format(media_id, mime_type)
 
             if extra.get(ATTR_FORMAT) is None:
                 extra[ATTR_FORMAT] = stream_format
 
             if extra[ATTR_FORMAT] not in STREAM_FORMAT_TO_MEDIA_TYPE:
                 _LOGGER.error(
-                    "Media type %s is not supported with format %s",
+                    "Media type %s is not supported with format %s (mime: %s)",
                     original_media_type,
                     extra[ATTR_FORMAT],
+                    mime_type,
                 )
                 return
 

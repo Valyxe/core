@@ -572,6 +572,7 @@ async def test_services_play_media_audio(
         (MEDIA_TYPE_VIDEO, "http://localhost/media.mks", "mks"),
         (MEDIA_TYPE_VIDEO, "http://localhost/media.m3u8", "hls"),
         (MEDIA_TYPE_VIDEO, "http://localhost/media.dash", "dash"),
+        (MEDIA_TYPE_VIDEO, "http://localhost/media.mpd", "dash"),
         (MEDIA_TYPE_VIDEO, "http://localhost/media.ism", "ism"),
     ],
 )

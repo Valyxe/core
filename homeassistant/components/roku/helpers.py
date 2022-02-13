@@ -1,8 +1,6 @@
 """Helpers for Roku."""
 from __future__ import annotations
 
-import mimetypes
-
 import yarl
 
 MIME_TO_STREAM_FORMAT = {
@@ -26,9 +24,6 @@ def format_channel_name(channel_number: str, channel_name: str | None = None) ->
 
 def guess_stream_format(url: str, mime_type: str | None = None) -> str | None:
     """Guess the Roku stream format for a given URL."""
-    if mime_type is None:
-        mime_type, _ = mimetypes.guess_type(url)
-
     parsed = yarl.URL(url)
 
     if mime_type == "audio/mpeg" and parsed.path.endswith(".m4a"):
@@ -36,6 +31,8 @@ def guess_stream_format(url: str, mime_type: str | None = None) -> str | None:
 
     if mime_type is None:
         if parsed.path.endswith(".dash"):
+            return "dash"
+        if parsed.path.endswith(".mpd"):
             return "dash"
         if parsed.path.endswith(".m4v"):
             return "mp4"
