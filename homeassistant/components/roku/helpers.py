@@ -7,6 +7,7 @@ import yarl
 
 MIME_TO_STREAM_FORMAT = {
     "application/dash+xml": "dash",
+    "application/x-mpegURL": "hls",
     "audio/mpeg": "mp3",
     "audio/x-ms-wma": "wma",
     "video/mp4": "mp4",
@@ -33,12 +34,17 @@ def guess_stream_format(url: str, mime_type: str | None = None) -> str | None:
     if mime_type == "audio/mpeg" and parsed.path.endswith(".m4a"):
         return "m4a"
 
-    if parsed.path.endswith(".mks"):
-        return "mks"
-    if parsed.path.endswith(".mka"):
-        return "mka"
-    if parsed.path.endswith(".ism"):
-        return "ism"
+    if mime_type is None:
+        if parsed.path.endswith(".dash"):
+            return "dash"
+        if parsed.path.endswith(".m4v"):
+            return "mp4"
+        if parsed.path.endswith(".mks"):
+            return "mks"
+        if parsed.path.endswith(".mka"):
+            return "mka"
+        if parsed.path.endswith(".ism"):
+            return "ism"
 
     if mime_type not in MIME_TO_STREAM_FORMAT:
         return None
