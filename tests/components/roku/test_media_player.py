@@ -540,6 +540,28 @@ async def test_services_play_media_audio(
         },
     )
 
+    await hass.services.async_call(
+        MP_DOMAIN,
+        SERVICE_PLAY_MEDIA,
+        {
+            ATTR_ENTITY_ID: MAIN_ENTITY_ID,
+            ATTR_MEDIA_CONTENT_TYPE: MEDIA_TYPE_MUSIC,
+            ATTR_MEDIA_CONTENT_ID: "https://awesome.tld/media.mka",
+        },
+        blocking=True,
+    )
+
+    assert mock_roku.play_on_roku.call_count == 3
+    mock_roku.play_on_roku.assert_called_with(
+        "https://awesome.tld/media.mka",
+        {
+            "t": "a",
+            "songName": "Home Assistant",
+            "songFormat": "mka",
+            "artistName": "Home Assistant",
+        },
+    )
+
 
 async def test_services_play_media_video(
     hass: HomeAssistant,
@@ -587,6 +609,26 @@ async def test_services_play_media_video(
         {
             "videoName": "Home Assistant",
             "videoFormat": "mp4",
+        },
+    )
+
+    await hass.services.async_call(
+        MP_DOMAIN,
+        SERVICE_PLAY_MEDIA,
+        {
+            ATTR_ENTITY_ID: MAIN_ENTITY_ID,
+            ATTR_MEDIA_CONTENT_TYPE: MEDIA_TYPE_VIDEO,
+            ATTR_MEDIA_CONTENT_ID: "https://awesome.tld/media.mks",
+        },
+        blocking=True,
+    )
+
+    assert mock_roku.play_on_roku.call_count == 3
+    mock_roku.play_on_roku.assert_called_with(
+        "https://awesome.tld/media.mks",
+        {
+            "videoName": "Home Assistant",
+            "videoFormat": "mks",
         },
     )
 
